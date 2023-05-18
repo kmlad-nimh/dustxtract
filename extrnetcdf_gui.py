@@ -1,20 +1,26 @@
 import tkinter as tk
 from tkinter import filedialog
+from tkinter import messagebox
 import netCDF4
 import pandas as pd
 from geopy.distance import geodesic
 import numpy as np
 
+# Display the warning message
+messagebox.showwarning("Warning", "This code was created by the National Institute of Meteorology and Hydrology "
+                                  "and its distribution to non-authorized persons is prohibited.")
+
 # Open the NetCDF file
 nc_filename = filedialog.askopenfilename(title='Select NetCDF file', filetypes=[('NetCDF Files', '*.nc')])
 nc_file = netCDF4.Dataset(nc_filename)
-# Access the subgroup containing the variables if necessary
-# data_group = nc_file.groups['data_group']
 
 # Get the relevant variables from the NetCDF file
 lats = nc_file.variables['latitude'][:]
 lons = nc_file.variables['longitude'][:]
 dust = nc_file.variables['dust'][:]  # Assuming the variable name is 'dust'
+
+# Get the number of hours from the time dimension
+num_hours = nc_file.dimensions['time'].size
 
 # Read the station data from the CSV file
 stations_file = filedialog.askopenfilename(title='Select stations file', filetypes=[('CSV Files', '*.csv')])
@@ -34,11 +40,9 @@ for index, station in station_data.iterrows():
     hourly_values = dust[:, 0, closest_index // lons.size, closest_index % lons.size]
 
     # Create a DataFrame for the station data
-    station_df = pd.DataFrame({'hour': np.arange(744), 'dust_value': hourly_values.tolist()})
+    station_df = pd.DataFrame({'hour': np.arange(num_hours), 'dust_value': hourly_values.tolist()})
 
     # Get the station name for the file name
-    # Remove the asterisk since it's not an allowed Windows symbol
-    #station_name = station['station_code']
     station_name = station['station_code'].replace('*', '')
 
     # Save the station data to a separate CSV file
@@ -47,3 +51,4 @@ for index, station in station_data.iterrows():
 
 # Close the NetCDF file
 nc_file.close()
+
